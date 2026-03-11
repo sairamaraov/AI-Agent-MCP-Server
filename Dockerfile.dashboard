@@ -1,0 +1,37 @@
+# Dashboard container
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Add labels
+LABEL org.opencontainers.image.title="Claude Agent MCP Dashboard"
+LABEL org.opencontainers.image.description="Monitoring dashboard for Claude Agent MCP Server"
+LABEL org.opencontainers.image.authors=""
+
+# Copy dashboard files
+COPY dashboard/package*.json ./
+
+# Install dependencies
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy application code
+COPY dashboard/ ./
+
+# Environment variables
+ENV NODE_ENV=production
+ENV REDIS_HOST=redis
+ENV REDIS_PORT=6379
+ENV REDIS_PASSWORD=
+ENV REDIS_DB=0
+ENV REDIS_PREFIX=agent-team:
+ENV DASHBOARD_PORT=3456
+
+# Expose dashboard port
+EXPOSE 3456
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3456/api/team-status || exit 1
+
+# Run dashboard
+CMD ["node", "server.js"]

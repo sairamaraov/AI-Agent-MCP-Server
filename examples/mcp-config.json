@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "redis-agent": {
+      "command": "node",
+      "args": ["C:/SourceCode/ClaudeAgentMCPServer/dist/index.js"],
+      "env": {
+        "REDIS_HOST": "localhost",
+        "REDIS_PORT": "6379"
+      }
+    }
+  }
+}

@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Team Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-yellow: #eab308;
+      --accent-red: #ef4444;
+      --accent-purple: #a855f7;
+      --accent-cyan: #06b6d4;
+      --accent-orange: #f97316;
+      --border-color: #334155;
+      --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      --radius: 8px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header h1 .logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-red);
+    }
+
+    .status-dot.connected {
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+
+    /* Main Layout */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 1fr 380px;
+      grid-template-rows: auto auto 1fr;
+      gap: 20px;
+      padding: 20px;
+      min-height: calc(100vh - 65px);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .card-body {
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    /* Team Status */
+    .team-status {
+      grid-column: span 2;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--bg-tertiary);
+      padding: 16px;
+      border-radius: var(--radius);
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .stat-card.active .stat-value { color: var(--accent-green); }
+    .stat-card.busy .stat-value { color: var(--accent-yellow); }
+    .stat-card.idle .stat-value { color: var(--accent-blue); }
+    .stat-card.offline .stat-value { color: var(--text-muted); }
+
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .agent-card {
+      background: var(--bg-tertiary);
+      padding: 14px;
+      border-radius: var(--radius);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .agent-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--card-shadow);
+    }
+
+    .agent-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .agent-avatar.active { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+    .agent-avatar.busy { background: rgba(234, 179, 8, 0.2); color: var(--accent-yellow); }
+    .agent-avatar.idle { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+    .agent-avatar.offline { background: rgba(100, 116, 139, 0.2); color: var(--text-muted); }
+
+    .agent-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .agent-name {
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .agent-role {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .agent-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 6px;
+    }
+
+    .agent-status.active { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+    .agent-status.busy { background: rgba(234, 179, 8, 0.15); color: var(--accent-yellow); }
+    .agent-status.idle { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+    .agent-status.offline { background: rgba(100, 116, 139, 0.15); color: var(--text-muted); }
+
+    /* Activity Feed */
+    .activity-feed .card-body {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .activity-icon.message { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+    .activity-icon.task { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+    .activity-icon.agent { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+    .activity-icon.artifact { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); }
+
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .activity-detail {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .activity-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Tasks */
+    .tasks-section {
+      grid-column: span 2;
+    }
+
+    .task-stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .task-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .task-stat-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .task-stat-dot.pending { background: var(--text-muted); }
+    .task-stat-dot.in-progress { background: var(--accent-blue); }
+    .task-stat-dot.review { background: var(--accent-purple); }
+    .task-stat-dot.blocked { background: var(--accent-red); }
+    .task-stat-dot.completed { background: var(--accent-green); }
+
+    .tasks-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .task-column {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      padding: 12px;
+      min-height: 200px;
+    }
+
+    .task-column-header {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-column-count {
+      background: var(--bg-secondary);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+
+    .task-card {
+      background: var(--bg-secondary);
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 3px solid var(--border-color);
+    }
+
+    .task-card.critical { border-left-color: var(--accent-red); }
+    .task-card.high { border-left-color: var(--accent-orange); }
+    .task-card.normal { border-left-color: var(--accent-blue); }
+    .task-card.low { border-left-color: var(--text-muted); }
+
+    .task-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .task-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .task-assignee {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .task-priority {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .task-priority.critical { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+    .task-priority.high { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+    .task-priority.normal { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+    .task-priority.low { background: rgba(100, 116, 139, 0.2); color: var(--text-muted); }
+
+    /* Messages Section */
+    .messages-section .card-body {
+      max-height: 400px;
+    }
+
+    .message-item {
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+    }
+
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+
+    .message-from {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .message-to {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .message-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .message-subject {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .message-content {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .message-type {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-right: 8px;
+    }
+
+    .message-type.request { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+    .message-type.response { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+    .message-type.notification { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+    .message-type.direct { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+
+    /* Empty States */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+      max-width: 350px;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .toast-icon {
+      font-size: 18px;
+    }
+
+    .toast-content {
+      flex: 1;
+    }
+
+    .toast-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .toast-message {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--text-muted);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .modal-close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-section {
+      margin-bottom: 20px;
+    }
+
+    .modal-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .modal-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .modal-value {
+      font-size: 14px;
+      color: var(--text-primary);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .modal-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+
+    .modal-meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-meta-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .modal-meta-value {
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .message-type-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .modal-value pre {
+      background: var(--bg-tertiary);
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+      margin: 0;
+    }
+
+    /* Artifacts Section */
+    .artifacts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    .artifact-card {
+      background: var(--bg-tertiary);
+      padding: 14px;
+      border-radius: var(--radius);
+      border-left: 3px solid var(--accent-blue);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .artifact-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--card-shadow);
+    }
+
+    .artifact-type {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-blue);
+      margin-bottom: 8px;
+    }
+
+    .artifact-path {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+
+    .artifact-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .artifact-owner {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Communication Graph */
+    .communication-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .connection-item {
+      background: var(--bg-tertiary);
+      padding: 12px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .connection-arrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .connection-from,
+    .connection-to {
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .connection-count {
+      background: var(--bg-secondary);
+      padding: 4px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-blue);
+      flex-shrink: 0;
+    }
+
+    /* Workload Chart */
+    .workload-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .workload-item {
+      background: var(--bg-tertiary);
+      padding: 12px;
+      border-radius: var(--radius);
+    }
+
+    .workload-agent {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .workload-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .workload-status {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: capitalize;
+    }
+
+    .workload-status.active { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+    .workload-status.busy { background: rgba(234, 179, 8, 0.15); color: var(--accent-yellow); }
+    .workload-status.idle { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+    .workload-status.offline { background: rgba(100, 116, 139, 0.15); color: var(--text-muted); }
+
+    .workload-bar {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .task-bar-item {
+      height: 20px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-primary);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-bar-item.in-progress { background: var(--accent-blue); }
+    .task-bar-item.review { background: var(--accent-purple); }
+    .task-bar-item.pending { background: var(--text-muted); }
+    .task-bar-item.blocked { background: var(--accent-red); }
+    .task-bar-item.completed { background: var(--accent-green); }
+
+    /* Message Chains */
+    .chain-item {
+      background: var(--bg-tertiary);
+      padding: 12px;
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+    }
+
+    .chain-subject {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .chain-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .chain-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1400px) {
+      .main {
+        grid-template-columns: 1fr 350px;
+      }
+      .team-status, .tasks-section {
+        grid-column: span 1;
+      }
+      .tasks-board {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .main {
+        grid-template-columns: 1fr;
+      }
+      .activity-feed {
+        grid-row: auto;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>
+      <span class="logo">🤖</span>
+      Agent Team Dashboard
+    </h1>
+    <div class="connection-status">
+      <span class="status-dot" id="connectionStatus"></span>
+      <span id="connectionText">Connecting...</span>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Team Status -->
+    <section class="card team-status">
+      <div class="card-header">
+        <h2>👥 Team Status</h2>
+        <span id="lastUpdate" style="font-size: 12px; color: var(--text-muted);"></span>
+      </div>
+      <div class="card-body">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="totalAgents">0</div>
+            <div class="stat-label">Total</div>
+          </div>
+          <div class="stat-card active">
+            <div class="stat-value" id="activeAgents">0</div>
+            <div class="stat-label">Active</div>
+          </div>
+          <div class="stat-card busy">
+            <div class="stat-value" id="busyAgents">0</div>
+            <div class="stat-label">Busy</div>
+          </div>
+          <div class="stat-card idle">
+            <div class="stat-value" id="idleAgents">0</div>
+            <div class="stat-label">Idle</div>
+          </div>
+          <div class="stat-card offline">
+            <div class="stat-value" id="offlineAgents">0</div>
+            <div class="stat-label">Offline</div>
+          </div>
+        </div>
+        <div class="agents-grid" id="agentsGrid">
+          <div class="empty-state">
+            <div class="empty-state-icon">👤</div>
+            <div>No agents registered yet</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Messages -->
+    <section class="card messages-section">
+      <div class="card-header">
+        <h2>💬 Recent Messages</h2>
+      </div>
+      <div class="card-body" id="messagesList">
+        <div class="empty-state">
+          <div class="empty-state-icon">💬</div>
+          <div>No messages yet</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tasks - full row -->
+    <section class="card tasks-section" style="grid-column: span 3;">
+      <div class="card-header">
+        <h2>✅ Tasks</h2>
+      </div>
+      <div class="card-body">
+        <div class="task-stats">
+          <div class="task-stat">
+            <span class="task-stat-dot pending"></span>
+            <span>Pending: <strong id="pendingTasks">0</strong></span>
+          </div>
+          <div class="task-stat">
+            <span class="task-stat-dot in-progress"></span>
+            <span>In Progress: <strong id="inProgressTasks">0</strong></span>
+          </div>
+          <div class="task-stat">
+            <span class="task-stat-dot review"></span>
+            <span>Review: <strong id="reviewTasks">0</strong></span>
+          </div>
+          <div class="task-stat">
+            <span class="task-stat-dot blocked"></span>
+            <span>Blocked: <strong id="blockedTasks">0</strong></span>
+          </div>
+          <div class="task-stat">
+            <span class="task-stat-dot completed"></span>
+            <span>Completed: <strong id="completedTasks">0</strong></span>
+          </div>
+        </div>
+        <div class="tasks-board">
+          <div class="task-column">
+            <div class="task-column-header">
+              Pending
+              <span class="task-column-count" id="pendingCount">0</span>
+            </div>
+            <div id="pendingColumn"></div>
+          </div>
+          <div class="task-column">
+            <div class="task-column-header">
+              In Progress
+              <span class="task-column-count" id="inProgressCount">0</span>
+            </div>
+            <div id="inProgressColumn"></div>
+          </div>
+          <div class="task-column">
+            <div class="task-column-header">
+              Review
+              <span class="task-column-count" id="reviewCount">0</span>
+            </div>
+            <div id="reviewColumn"></div>
+          </div>
+          <div class="task-column">
+            <div class="task-column-header">
+              Blocked
+              <span class="task-column-count" id="blockedCount">0</span>
+            </div>
+            <div id="blockedColumn"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Shared Artifacts + Agent Workload - 2 equal columns -->
+    <div style="grid-column: span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+      <section class="card">
+        <div class="card-header">
+          <h2>📁 Shared Artifacts</h2>
+        </div>
+        <div class="card-body">
+          <div id="artifactsGrid">
+            <div class="empty-state">
+              <div class="empty-state-icon">📁</div>
+              <div>No artifacts shared yet</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>📊 Agent Workload</h2>
+        </div>
+        <div class="card-body">
+          <div id="agentWorkload">
+            <div class="empty-state">
+              <div class="empty-state-icon">📊</div>
+              <div>No workload data</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Activity Feed -->
+    <section class="card activity-feed">
+      <div class="card-header">
+        <h2>📊 Activity Feed</h2>
+      </div>
+      <div class="card-body" id="activityFeed">
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <div>No activity yet</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Transparency Section - Communication Graph -->
+    <section class="card" style="grid-column: span 2;">
+      <div class="card-header">
+        <h2>🔗 Communication Graph</h2>
+      </div>
+      <div class="card-body">
+        <div id="communicationGraph">
+          <div class="empty-state">
+            <div class="empty-state-icon">🔗</div>
+            <div>No communications yet</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Message Chains -->
+    <section class="card" style="grid-column: span 3;">
+      <div class="card-header">
+        <h2>🔀 Message Threads</h2>
+      </div>
+      <div class="card-body">
+        <div id="messageChains">
+          <div class="empty-state">
+            <div class="empty-state-icon">🔀</div>
+            <div>No message threads</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Message Modal -->
+  <div class="modal" id="messageModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Message Details</div>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="modalContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Artifact Modal -->
+  <div class="modal" id="artifactModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="artifactModalTitle">Artifact Details</div>
+        <button class="modal-close" id="artifactModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="artifactModalContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // State
+    let ws;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 10;
+
+    // DOM Elements
+    const connectionStatus = document.getElementById('connectionStatus');
+    const connectionText = document.getElementById('connectionText');
+    const toastContainer = document.getElementById('toastContainer');
+
+    // Initialize WebSocket
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+      ws.onopen = () => {
+        connectionStatus.classList.add('connected');
+        connectionText.textContent = 'Connected';
+        reconnectAttempts = 0;
+        showToast('Connected', 'Dashboard connected to server', '✅');
+      };
+
+      ws.onclose = () => {
+        connectionStatus.classList.remove('connected');
+        connectionText.textContent = 'Disconnected';
+        
+        if (reconnectAttempts < maxReconnectAttempts) {
+          reconnectAttempts++;
+          setTimeout(connectWebSocket, 2000 * reconnectAttempts);
+          connectionText.textContent = `Reconnecting (${reconnectAttempts})...`;
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          handleMessage(message);
+        } catch (e) {
+          console.error('Parse error:', e);
+        }
+      };
+    }
+
+    // Handle incoming messages
+    function handleMessage(message) {
+      console.log('📨 Received message:', message.type);
+
+      switch (message.type) {
+        case 'initial':
+          console.log('  - teamStatus:', message.data.teamStatus?.agents?.length || 0, 'agents');
+          console.log('  - tasks:', message.data.tasks?.tasks?.length || 0, 'tasks');
+          console.log('  - messages:', message.data.messages?.length || 0, 'messages');
+          console.log('  - activity:', message.data.activity?.length || 0, 'activities');
+          updateTeamStatus(message.data.teamStatus);
+          updateTasks(message.data.tasks);
+          updateMessages(message.data.messages);
+          updateActivity(message.data.activity);
+          updateCommunicationGraph(message.data.graph);
+          updateAgentWorkload(message.data.workload);
+          updateArtifacts(message.data.artifacts);
+          updateMessageChains(message.data.chains);
+          break;
+        case 'teamStatus':
+          updateTeamStatus(message.data);
+          break;
+        case 'event':
+          handleEvent(message.data);
+          break;
+      }
+
+      document.getElementById('lastUpdate').textContent =
+        `Updated: ${new Date().toLocaleTimeString()}`;
+    }
+
+    // Handle real-time events
+    function handleEvent(event) {
+      if (event.type === 'agent_joined') {
+        showToast('Agent Joined', `${event.agent.name} joined the team`, '👋');
+      } else if (event.type === 'agent_left') {
+        showToast('Agent Left', `${event.agent.name} left the team`, '👋');
+      } else if (event.type === 'new_message' || event.type === 'message_sent') {
+        showToast('New Message', `From ${event.from}: ${event.subject}`, '💬');
+        refreshMessages();
+      } else if (event.type === 'broadcast') {
+        showToast('Broadcast', `${event.from}: ${event.subject}`, '📢');
+        refreshMessages();
+      }
+    }
+
+    // Update functions
+    function updateTeamStatus(data) {
+      if (!data) return;
+
+      // Update stats
+      document.getElementById('totalAgents').textContent = data.summary.total;
+      document.getElementById('activeAgents').textContent = data.summary.active;
+      document.getElementById('busyAgents').textContent = data.summary.busy;
+      document.getElementById('idleAgents').textContent = data.summary.idle;
+      document.getElementById('offlineAgents').textContent = data.summary.offline;
+
+      // Update agents grid
+      const grid = document.getElementById('agentsGrid');
+      if (data.agents.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">👤</div>
+            <div>No agents registered yet</div>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = data.agents.map(agent => `
+        <div class="agent-card">
+          <div class="agent-avatar ${agent.status}">
+            ${getInitials(agent.name)}
+          </div>
+          <div class="agent-info">
+            <div class="agent-name">${escapeHtml(agent.name)}</div>
+            <div class="agent-role">${escapeHtml(agent.role)}</div>
+            <span class="agent-status ${agent.status}">
+              ${getStatusIcon(agent.status)} ${agent.status}
+            </span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateTasks(data) {
+      console.log('🔄 updateTasks called with:', data?.tasks?.length || 0, 'tasks');
+      if (!data) {
+        console.warn('⚠️ updateTasks: No data provided');
+        return;
+      }
+
+      // Update stats
+      document.getElementById('pendingTasks').textContent = data.summary.pending;
+      document.getElementById('inProgressTasks').textContent = data.summary.inProgress;
+      document.getElementById('reviewTasks').textContent = data.summary.review;
+      document.getElementById('blockedTasks').textContent = data.summary.blocked;
+      document.getElementById('completedTasks').textContent = data.summary.completed;
+
+      // Group tasks by status
+      const pending = data.tasks.filter(t => t.status === 'pending' || t.status === 'assigned');
+      const inProgress = data.tasks.filter(t => t.status === 'in-progress');
+      const review = data.tasks.filter(t => t.status === 'review');
+      const blocked = data.tasks.filter(t => t.status === 'blocked');
+
+      // Update columns
+      document.getElementById('pendingCount').textContent = pending.length;
+      document.getElementById('inProgressCount').textContent = inProgress.length;
+      document.getElementById('reviewCount').textContent = review.length;
+      document.getElementById('blockedCount').textContent = blocked.length;
+
+      document.getElementById('pendingColumn').innerHTML = renderTaskCards(pending);
+      document.getElementById('inProgressColumn').innerHTML = renderTaskCards(inProgress);
+      document.getElementById('reviewColumn').innerHTML = renderTaskCards(review);
+      document.getElementById('blockedColumn').innerHTML = renderTaskCards(blocked);
+    }
+
+    function renderTaskCards(tasks) {
+      if (tasks.length === 0) return '';
+      return tasks.slice(0, 5).map(task => `
+        <div class="task-card ${task.priority}">
+          <div class="task-title">${escapeHtml(task.title)}</div>
+          <div class="task-meta">
+            <span class="task-assignee">
+              ${task.assignee ? `👤 ${escapeHtml(task.assignee)}` : 'Unassigned'}
+            </span>
+            <span class="task-priority ${task.priority}">${task.priority}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateMessages(messages) {
+      const container = document.getElementById('messagesList');
+      if (!messages || messages.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">💬</div>
+            <div>No messages yet</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = messages.slice(0, 20).map((msg, idx) => `
+        <div class="message-item" data-message-index="${idx}" style="cursor: pointer; transition: background 0.2s;">
+          <div class="message-header">
+            <div>
+              <span class="message-type ${msg.type}">${msg.type}</span>
+              <span class="message-from">${escapeHtml(msg.from)}</span>
+              <span class="message-to">→ ${escapeHtml(msg.to)}</span>
+            </div>
+            <span class="message-time">${formatTime(msg.timestamp)}</span>
+          </div>
+          <div class="message-subject">${escapeHtml(msg.subject)}</div>
+          <div class="message-content">${escapeHtml(msg.content)}</div>
+        </div>
+      `).join('');
+
+      // Attach click handlers to messages
+      document.querySelectorAll('.message-item').forEach(item => {
+        item.addEventListener('click', function() {
+          const idx = parseInt(this.getAttribute('data-message-index'));
+          openMessageModal(messages[idx]);
+        });
+        item.addEventListener('mouseover', function() {
+          this.style.background = 'var(--bg-secondary)';
+        });
+        item.addEventListener('mouseout', function() {
+          this.style.background = 'transparent';
+        });
+      });
+    }
+
+    function updateActivity(activities) {
+      console.log('🔄 updateActivity called with:', activities?.length || 0, 'activities');
+      const container = document.getElementById('activityFeed');
+      if (!activities || activities.length === 0) {
+        console.warn('⚠️ updateActivity: No activities to display');
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div>No activity yet</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = activities.slice(0, 50).map(activity => `
+        <div class="activity-item">
+          <div class="activity-icon ${activity.type}">
+            ${getActivityIcon(activity)}
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">${escapeHtml(activity.action)}</div>
+            <div class="activity-detail">${escapeHtml(activity.details)}</div>
+            <div class="activity-time">${formatTime(activity.timestamp)} by ${escapeHtml(activity.agentId)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Refresh functions
+    async function refreshMessages() {
+      try {
+        const response = await fetch('/api/messages/recent');
+        const messages = await response.json();
+        updateMessages(messages);
+      } catch (e) {
+        console.error('Failed to refresh messages:', e);
+      }
+    }
+
+    async function updateCommunicationGraph(graph) {
+      const container = document.getElementById('communicationGraph');
+      if (!graph || !graph.connections || graph.connections.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🔗</div>
+            <div>No communications yet</div>
+          </div>
+        `;
+        return;
+      }
+
+      const stats = `
+        <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-secondary);">
+          ${graph.totalConnections} connections • ${graph.totalMessages} total messages
+        </div>
+      `;
+
+      const connections = graph.connections.slice(0, 10).map(conn => `
+        <div class="connection-item">
+          <div class="connection-arrow">
+            <span class="connection-from">${escapeHtml(conn.from)}</span>
+            <span style="color: var(--text-muted);">→</span>
+            <span class="connection-to">${escapeHtml(conn.to)}</span>
+          </div>
+          <span class="connection-count">${conn.messageCount}</span>
+        </div>
+      `).join('');
+
+      container.innerHTML = stats + '<div class="communication-list">' + connections + '</div>';
+    }
+
+    async function updateAgentWorkload(agents) {
+      const container = document.getElementById('agentWorkload');
+      if (!agents || agents.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div>No workload data</div>
+          </div>
+        `;
+        return;
+      }
+
+      const workload = agents.slice(0, 5).map(agent => {
+        const tasksByStatus = agent.tasksByStatus;
+        const statusLabels = [
+          { key: 'in-progress', label: 'IP' },
+          { key: 'review', label: 'RV' },
+          { key: 'pending', label: 'PD' },
+          { key: 'blocked', label: 'BL' },
+          { key: 'completed', label: 'CM' }
+        ];
+
+        const barHtml = statusLabels
+          .filter(s => tasksByStatus[s.key] > 0)
+          .map(s => `
+            <div class="task-bar-item ${s.key}" title="${s.key}: ${tasksByStatus[s.key]}">
+              ${tasksByStatus[s.key] > 0 ? tasksByStatus[s.key] : ''}
+            </div>
+          `).join('');
+
+        return `
+          <div class="workload-item">
+            <div class="workload-agent">
+              <div class="workload-name">${escapeHtml(agent.name)}</div>
+              <span class="workload-status ${agent.status}">${agent.status}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">
+              <span>${agent.taskCount} tasks</span>
+              <span>${agent.unreadMessages} unread</span>
+            </div>
+            ${barHtml ? '<div class="workload-bar">' + barHtml + '</div>' : ''}
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = '<div class="workload-list">' + workload + '</div>';
+    }
+
+    async function updateArtifacts(artifacts) {
+      const container = document.getElementById('artifactsGrid');
+      if (!artifacts || artifacts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📁</div>
+            <div>No artifacts shared yet</div>
+          </div>
+        `;
+        return;
+      }
+
+      // Store artifacts for modal access
+      window.artifactsData = artifacts;
+
+      const grid = artifacts.slice(0, 8).map((artifact, idx) => `
+        <div class="artifact-card" data-artifact-index="${idx}" style="cursor: pointer;">
+          <span class="artifact-type">${escapeHtml(artifact.type || 'document')}</span>
+          <div class="artifact-path">${escapeHtml(artifact.path)}</div>
+          <div class="artifact-description">${escapeHtml(artifact.description || 'No description')}</div>
+          <div class="artifact-owner">
+            👤 ${escapeHtml(artifact.owner || 'Unknown')}
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = '<div class="artifacts-grid">' + grid + '</div>';
+
+      // Attach click handlers to artifacts
+      document.querySelectorAll('.artifact-card').forEach(card => {
+        card.addEventListener('click', function() {
+          const idx = parseInt(this.getAttribute('data-artifact-index'));
+          openArtifactModal(artifacts[idx]);
+        });
+        card.addEventListener('mouseover', function() {
+          this.style.opacity = '0.8';
+        });
+        card.addEventListener('mouseout', function() {
+          this.style.opacity = '1';
+        });
+      });
+    }
+
+    async function updateMessageChains(chains) {
+      const container = document.getElementById('messageChains');
+      if (!chains || chains.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🔀</div>
+            <div>No message threads</div>
+          </div>
+        `;
+        return;
+      }
+
+      const threads = chains.slice(0, 8).map(chain => `
+        <div class="chain-item">
+          <div class="chain-subject">${escapeHtml(chain.subject)}</div>
+          <div class="chain-meta">
+            <span class="chain-meta-item">👤 ${escapeHtml(chain.initiator)}</span>
+            <span class="chain-meta-item">💬 ${chain.messageCount}</span>
+            <span class="chain-meta-item">👥 ${chain.participants.length}</span>
+            <span class="chain-meta-item">⏱ ${new Date(chain.lastUpdate).toLocaleTimeString()}</span>
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = threads;
+    }
+
+    // Helper functions
+    function getInitials(name) {
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+
+    function getStatusIcon(status) {
+      const icons = {
+        active: '🟢',
+        busy: '🟡',
+        idle: '🔵',
+        offline: '⚫'
+      };
+      return icons[status] || '⚪';
+    }
+
+    function getActivityIcon(activity) {
+      if (activity.action?.includes('message')) return '💬';
+      if (activity.action?.includes('task') || activity.type === 'task') return '✅';
+      if (activity.action?.includes('agent')) return '👤';
+      if (activity.action?.includes('artifact')) return '📁';
+      return '📋';
+    }
+
+    function formatTime(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
+      
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+      return date.toLocaleDateString();
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showToast(title, message, icon = '📢') {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <span class="toast-icon">${icon}</span>
+        <div class="toast-content">
+          <div class="toast-title">${escapeHtml(title)}</div>
+          <div class="toast-message">${escapeHtml(message)}</div>
+        </div>
+      `;
+      toastContainer.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Artifact Modal functions
+    function openArtifactModal(artifact) {
+      const modal = document.getElementById('artifactModal');
+      const modalTitle = document.getElementById('artifactModalTitle');
+      const modalContent = document.getElementById('artifactModalContent');
+
+      // Set title
+      modalTitle.textContent = `📁 ${escapeHtml(artifact.path.split('/').pop())}`;
+
+      const createdDate = artifact.createdAt ? new Date(artifact.createdAt).toLocaleString() : 'Unknown';
+      const updatedDate = artifact.updatedAt ? new Date(artifact.updatedAt).toLocaleString() : 'Unknown';
+      const fileSize = artifact.size ? formatFileSize(artifact.size) : 'Unknown';
+
+      modalContent.innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <div class="artifact-type" style="margin-bottom: 12px;">${escapeHtml(artifact.type || 'document')}</div>
+
+          <div class="modal-meta">
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Owner</span>
+              <span class="modal-meta-value">👤 ${escapeHtml(artifact.owner || 'Unknown')}</span>
+            </div>
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Version</span>
+              <span class="modal-meta-value">${escapeHtml(artifact.version || '1.0.0')}</span>
+            </div>
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Created</span>
+              <span class="modal-meta-value">${createdDate}</span>
+            </div>
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Updated</span>
+              <span class="modal-meta-value">${updatedDate}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <span class="modal-label">File Path</span>
+          <div class="modal-value" style="font-family: 'Courier New', monospace; font-size: 12px; background: var(--bg-tertiary); padding: 12px; border-radius: 6px; word-break: break-all;">
+            ${escapeHtml(artifact.path)}
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <span class="modal-label">Description</span>
+          <div class="modal-value">${escapeHtml(artifact.description || 'No description provided')}</div>
+        </div>
+
+        ${artifact.content ? `
+          <div class="modal-section">
+            <span class="modal-label">Content (${fileSize})</span>
+            <div class="modal-value" style="background: var(--bg-tertiary); padding: 12px; border-radius: 6px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;">
+              ${escapeHtml(artifact.content)}
+            </div>
+          </div>
+        ` : ''}
+
+        ${artifact.metadata ? `
+          <div class="modal-section">
+            <span class="modal-label">Metadata</span>
+            <div class="modal-value" style="background: var(--bg-tertiary); padding: 12px; border-radius: 6px; overflow-x: auto;">
+              <pre style="margin: 0; font-family: 'Courier New', monospace; font-size: 11px;">${escapeHtml(JSON.stringify(artifact.metadata, null, 2))}</pre>
+            </div>
+          </div>
+        ` : ''}
+
+        ${artifact.tags && artifact.tags.length > 0 ? `
+          <div class="modal-section">
+            <span class="modal-label">Tags</span>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+              ${artifact.tags.map(tag => `
+                <span style="background: var(--accent-blue); color: var(--text-primary); padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500;">
+                  ${escapeHtml(tag)}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+      `;
+
+      modal.classList.add('active');
+    }
+
+    function closeArtifactModal() {
+      const modal = document.getElementById('artifactModal');
+      modal.classList.remove('active');
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // Modal functions
+    function openMessageModal(message) {
+      const modal = document.getElementById('messageModal');
+      const modalContent = document.getElementById('modalContent');
+
+      const formattedDate = new Date(message.timestamp).toLocaleString();
+
+      modalContent.innerHTML = `
+        <div class="message-type-badge message-type ${message.type}">
+          ${message.type}
+        </div>
+
+        <div class="modal-meta">
+          <div class="modal-meta-item">
+            <span class="modal-meta-label">From</span>
+            <span class="modal-meta-value">${escapeHtml(message.from)}</span>
+          </div>
+          <div class="modal-meta-item">
+            <span class="modal-meta-label">To</span>
+            <span class="modal-meta-value">${escapeHtml(message.to)}</span>
+          </div>
+          <div class="modal-meta-item">
+            <span class="modal-meta-label">Time</span>
+            <span class="modal-meta-value">${formattedDate}</span>
+          </div>
+          <div class="modal-meta-item">
+            <span class="modal-meta-label">Type</span>
+            <span class="modal-meta-value">${escapeHtml(message.type)}</span>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <span class="modal-label">Subject</span>
+          <div class="modal-value">${escapeHtml(message.subject)}</div>
+        </div>
+
+        <div class="modal-section">
+          <span class="modal-label">Message</span>
+          <div class="modal-value">${escapeHtml(message.content)}</div>
+        </div>
+
+        ${message.metadata ? `
+          <div class="modal-section">
+            <span class="modal-label">Metadata</span>
+            <div class="modal-value"><pre>${escapeHtml(JSON.stringify(message.metadata, null, 2))}</pre></div>
+          </div>
+        ` : ''}
+      `;
+
+      modal.classList.add('active');
+    }
+
+    function closeMessageModal() {
+      const modal = document.getElementById('messageModal');
+      modal.classList.remove('active');
+    }
+
+    // Initialize
+    connectWebSocket();
+
+    // Modal event listeners - Message Modal
+    document.getElementById('modalClose').addEventListener('click', closeMessageModal);
+    document.getElementById('messageModal').addEventListener('click', (e) => {
+      // Close modal when clicking on the overlay background
+      if (e.target.id === 'messageModal') {
+        closeMessageModal();
+      }
+    });
+
+    // Modal event listeners - Artifact Modal
+    document.getElementById('artifactModalClose').addEventListener('click', closeArtifactModal);
+    document.getElementById('artifactModal').addEventListener('click', (e) => {
+      // Close modal when clicking on the overlay background
+      if (e.target.id === 'artifactModal') {
+        closeArtifactModal();
+      }
+    });
+
+    // Close modals with Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeMessageModal();
+        closeArtifactModal();
+      }
+    });
+
+    // Periodic refresh
+    setInterval(async () => {
+      try {
+        const [tasksRes, activityRes, graphRes, workloadRes, artifactsRes, chainsRes, messagesRes] = await Promise.all([
+          fetch('/api/tasks'),
+          fetch('/api/activity'),
+          fetch('/api/communication-graph'),
+          fetch('/api/agent-workload'),
+          fetch('/api/artifacts'),
+          fetch('/api/message-chains'),
+          fetch('/api/messages/recent')
+        ]);
+        const tasks = await tasksRes.json();
+        const activity = await activityRes.json();
+        const graph = await graphRes.json();
+        const workload = await workloadRes.json();
+        const artifacts = await artifactsRes.json();
+        const chains = await chainsRes.json();
+        const messages = await messagesRes.json();
+
+        updateTasks(tasks);
+        updateActivity(activity);
+        updateCommunicationGraph(graph);
+        updateAgentWorkload(workload);
+        updateArtifacts(artifacts);
+        updateMessageChains(chains);
+        updateMessages(messages);
+      } catch (e) {
+        // Ignore errors
+      }
+    }, 10000);
+  </script>
+</body>
+</html>

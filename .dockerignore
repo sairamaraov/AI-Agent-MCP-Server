@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+dashboard/node_modules/
+
+# Build outputs (we rebuild in container)
+dist/
+
+# Development files
+*.log
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation (optional - comment out to include)
+# *.md
+
+# Local settings
+.claude/
+*.local.json
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+
+# Package binaries
+mcp-server-*.exe
+mcp-server-linux
+mcp-server-macos
+
+# Misc
+nul

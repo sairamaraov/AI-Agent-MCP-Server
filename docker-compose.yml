@@ -1,0 +1,42 @@
+services:
+  # Redis - shared state store for agent communication
+  redis:
+    image: redis:7-alpine
+    container_name: agent-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Dashboard - monitoring web UI
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    # Or use pre-built image from Docker Hub:
+    # image: YOUR_DOCKERHUB_USERNAME/claude-agent-dashboard:latest
+    container_name: agent-dashboard
+    restart: unless-stopped
+    ports:
+      - "3456:3456"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      REDIS_DB: "0"
+      REDIS_PREFIX: "agent-team:"
+      DASHBOARD_PORT: "3456"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis-data:
+    driver: local
